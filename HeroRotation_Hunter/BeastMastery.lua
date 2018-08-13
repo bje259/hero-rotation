@@ -54,6 +54,8 @@
     BindingShot                   = Spell(109248),
     ChimaeraShot                  = Spell(53209),
     DireBeast                     = Spell(120679),
+	DireBeastBas                  = Spell(205691),
+	DireBeastHaw                  = Spell(208652),
     KillerInstinct                = Spell(273887),
     OnewiththePack                = Spell(199528),
     ScentofBlood                  = Spell(193532),
@@ -203,7 +205,7 @@ local function APL ()
     if HR.CDsON() and S.Stampede:IsCastable() and (Player:Buff(S.BestialWrath) or ((S.BestialWrath:CooldownRemains() <= 2 or not AR.CDsON()) or (Target:TimeToDie() <= 15))) then
       if HR.Cast(S.Stampede, Settings.BeastMastery.GCDasOffGCD.Stampede) then return ""; end
     end
-    -- actions+=/aspect_of_the_wild
+	-- actions+=/aspect_of_the_wild
     if HR.CDsON() and S.AspectoftheWild:IsCastable() then
       if HR.Cast(S.AspectoftheWild, Settings.BeastMastery.GCDasOffGCD.AspectoftheWild) then return ""; end
     end
@@ -212,10 +214,16 @@ local function APL ()
       if HR.Cast(S.BestialWrath, Settings.BeastMastery.GCDasOffGCD.BestialWrath) then return ""; end
     end
     -- actions+=/multishot,if=spell_targets>2&(pet.cat.buff.beast_cleave.remains<gcd.max|pet.cat.buff.beast_cleave.down)
-    if HR.AoEON() and S.MultiShot:IsCastable() and Cache.EnemiesCount[40] > 2 and (Pet:BuffRemains(S.BeastCleaveBuff) < Player:GCD() or not Pet:Buff(S.BeastCleaveBuff)) then
+    if HR.AoEON() and S.MultiShot:IsCastable() and Cache.EnemiesCount[40] > 1 and (Pet:BuffRemains(S.BeastCleaveBuff) < Player:GCD() or not Pet:Buff(S.BeastCleaveBuff)) then
       if Hunter.MultishotInMain() and HR.Cast(S.MultiShot) then return "" else HR.CastSuggested(S.MultiShot) end
     end
-    -- actions+=/chimaera_shot
+	if HR.AoEON() and S.DireBeastHaw:IsCastable() and Cache.EnemiesCount[40] > 1 then
+      if HR.Cast(S.DireBeastHaw) then return "" ; end
+    end
+    if HR.CDsON() and Target:IsInRange(40) and S.DireBeastBas:IsCastable() then
+      if HR.Cast(S.DireBeastBas) then return ""; end
+    end
+	-- actions+=/chimaera_shot
     if S.ChimaeraShot:IsCastable() then
       if HR.Cast(S.ChimaeraShot) then return ""; end
     end

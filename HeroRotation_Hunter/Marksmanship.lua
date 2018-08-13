@@ -51,11 +51,11 @@
     HuntersMark                   = Spell(257284),
     LethalShots                   = Spell(260393),
     LockandLoad                   = Spell(194594),
-    MasterMarksman                = Spell(260309),
+    MasterMarksman                = Spell(269576),
     PiercingShot                  = Spell(198670),
     SerpentSting                  = Spell(271788),
     SerpentStingDebuff            = Spell(271788),
-    SteadyFocus                   = Spell(193533),
+    SteadyFocus                   = Spell(193534),
     Volley                        = Spell(260243),
     -- Defensive
     AspectoftheTurtle             = Spell(186265),
@@ -74,6 +74,7 @@
     PotionOfProlongedPowerBuff    = Spell(229206),
     SephuzBuff                    = Spell(208052),
     MKIIGyroscopicStabilizer      = Spell(235691),
+	LethalShotsBuff				  = Spell(260395),
     PoolFocus                     = Spell(9999000010),
     -- Macros
   };
@@ -263,11 +264,12 @@
         if HR.Cast(S.ExplosiveShot) then return ""; end
       end
       -- actions+=/multishot,if=active_enemies>2&buff.precise_shots.up&cooldown.aimed_shot.full_recharge_time<gcd*buff.precise_shots.stack+action.aimed_shot.cast_time
-      if S.MultiShot:IsCastable() and (Hunter.GetSplashCount(Target,8) > 2 and Player:Buff(S.PreciseShots) and S.AimedShot:FullRechargeTime() < Player:GCD() * Player:BuffStack(S.PreciseShots) + S.AimedShot:CastTime()) then
+	  -- and S.AimedShot:FullRechargeTime() < Player:GCD() * Player:BuffStack(S.PreciseShots) + S.AimedShot:CastTime()
+      if S.MultiShot:IsCastable() and (Player:Buff(S.LethalShotsBuff) or not S.LethalShots:IsAvailable()) and Hunter.GetSplashCount(Target,8) > 2 and Player:Buff(S.PreciseShots) then
         if Hunter.MultishotInMain() and HR.Cast(S.MultiShot) then return "" else HR.CastSuggested(S.MultiShot) end
       end
       -- actions+=/arcane_shot,if=active_enemies<3&buff.precise_shots.up&cooldown.aimed_shot.full_recharge_time<gcd*buff.precise_shots.stack+action.aimed_shot.cast_time
-      if S.ArcaneShot:IsCastable() and (Hunter.GetSplashCount(Target,8) < 3 and Player:Buff(S.PreciseShots) and S.AimedShot:FullRechargeTime() < Player:GCD() * Player:BuffStack(S.PreciseShots) + S.AimedShot:CastTime()) then
+      if S.ArcaneShot:IsCastable() and (Hunter.GetSplashCount(Target,8) < 3 and Player:Buff(S.PreciseShots) and (Player:Buff(S.LethalShotsBuff) or not S.LethalShots:IsAvailable())) then
         if HR.Cast(S.ArcaneShot) then return ""; end
       end
       -- actions+=/aimed_shot,if=buff.precise_shots.down&buff.double_tap.down&(active_enemies>2&buff.trick_shots.up|active_enemies<3&full_recharge_time<cast_time+gcd)
@@ -275,7 +277,7 @@
         if not IsCastableM(S.AimedShot) then HR.CastSuggested(S.AimedShot) elseif HR.Cast(S.AimedShot) then return ""; end
       end
       -- actions+=/rapid_fire,if=active_enemies<3|buff.trick_shots.up
-      if S.RapidFire:IsCastable() and (Hunter.GetSplashCount(Target,8) < 3 or Player:Buff(S.TrickShots)) then
+      if S.RapidFire:IsCastable() and (Hunter.GetSplashCount(Target,8) < 3 or Player:Buff(S.TrickShots)) and (Player:Buff(S.LethalShotsBuff) or not S.LethalShots:IsAvailable()) then
         if HR.Cast(S.RapidFire) then return ""; end
       end
       -- actions+=/explosive_shot
@@ -298,22 +300,23 @@
       if S.MultiShot:IsCastable() and Hunter.GetSplashCount(Target,8) > 2 and Player:Buff(S.PreciseShots) and S.AimedShot:FullRechargeTime() < Player:GCD() * Player:BuffStack(S.PreciseShots) + S.AimedShot:CastTime() then
         if Hunter.MultishotInMain() and HR.Cast(S.MultiShot) then return "" else HR.CastSuggested(S.MultiShot) end
       end
-      -- actions+=/aimed_shot,if=buff.precise_shots.down&(focus>70|buff.steady_focus.down)
-      if S.AimedShot:IsCastable() and not Player:Buff(S.PreciseShots) and (Player:Focus() > 70 or not Player:Buff(S.SteadyFocus)) then
+            -- actions+=/serpent_sting,if=refreshable
+      if S.SerpentSting:IsCastable() and Target:DebuffRefreshable(S.SerpentStingDebuff, 3.6) and Player:Focus() > 10 then
+        if HR.Cast(S.SerpentSting) then return ""; end
+      end
+	  -- actions+=/aimed_shot,if=buff.precise_shots.down&(focus>70|buff.steady_focus.down)
+      if S.AimedShot:IsCastable() and not Player:Buff(S.PreciseShots) and (Player:Focus() > 70 or (Player:Focus() > 30 and not S.LethalShots:IsAvailable()) or (Player:Buff(S.LethalShotsBuff) and Player:Focus() > 30)) then
         if not IsCastableM(S.AimedShot) then HR.CastSuggested(S.AimedShot) elseif HR.Cast(S.AimedShot) then return ""; end
       end
       -- actions+=/multishot,if=active_enemies>2&(focus>90|buff.precise_shots.up&(focus>70|buff.steady_focus.down&focus>45))
-      if S.MultiShot:IsCastable() and Hunter.GetSplashCount(Target,8) > 2 and (Player:Focus() > 90 or Player:Buff(S.PreciseShots) and (Player:Focus() > 70 or not Player:Buff(S.SteadyFocus) and Player:Focus() > 45)) then
+      if S.MultiShot:IsCastable() and Hunter.GetSplashCount(Target,8) > 2 and ((Player:Focus() > 90 and not S.LethalShots:IsAvailable()) or (Player:Buff(S.PreciseShots) and Player:Focus() > 15) or (Player:Focus() > 60 and Player:Buff(S.LethalShotsBuff))) then
         if Hunter.MultishotInMain() and HR.Cast(S.MultiShot) then return "" else HR.CastSuggested(S.MultiShot) end
       end
       -- actions+=/arcane_shot,if=active_enemies<3&(focus>70|buff.steady_focus.down&(focus>60|buff.precise_shots.up))
-      if S.ArcaneShot:IsCastable() and Hunter.GetSplashCount(Target,8) < 3 and (Player:Focus() > 70 or not Player:Buff(S.SteadyFocus) and (Player:Focus() > 60 or Player:Buff(S.PreciseShots))) then
+      if S.ArcaneShot:IsCastable() and Hunter.GetSplashCount(Target,8) < 3 and ((Player:Focus() > 70 and not S.LethalShots:IsAvailable()) or (Player:Buff(S.PreciseShots) and Player:Focus() > 15) or (Player:Focus() > 60 and Player:Buff(S.LethalShotsBuff))) then
         if HR.Cast(S.ArcaneShot) then return ""; end
       end
-      -- actions+=/serpent_sting,if=refreshable
-      if S.SerpentSting:IsCastable() and Target:DebuffRefreshable(S.SerpentStingDebuff, 3.6) then
-        if HR.Cast(S.SerpentSting) then return ""; end
-      end
+
       -- actions+=/steady_shot
       if S.SteadyShot:IsAvailable() then
         if HR.Cast(S.SteadyShot) then return ""; end
